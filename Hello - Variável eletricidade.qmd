@@ -1,0 +1,82 @@
+---
+title: "Luis Eduardo Correa"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(tidyverse)
+library(WDI)
+
+options(scipen = 999) # REMOVER A NOT. CIENT.
+# DADOS EM PAINEL
+dadoselectricity <- WDI(country = 'all',
+                indicator = 'EG.ELC.ACCS.ZS')
+
+paises <- c('BR', 'US')
+
+dadoselectricitybrus <- WDI(country = paises,
+                    indicator = 'EG.ELC.ACCS.ZS')
+
+# CORTE TRANSVERSAL
+dadoselectricity2023 <- WDI(country = 'all',
+                    indicator = 'EG.ELC.ACCS.ZS',
+                    start = 2023, end = 2023)
+
+# SÉRIE TEMPORAL
+dadoselectricitybr <- WDI(country = 'BR',
+                  indicator = 'EG.ELC.ACCS.ZS')
+
+```
+
+## VARIÁVEL
+
+Variável de eletricidade. Informações retiradas do WDI.
+
+## GRÁFICOS DE DADOS EM PAINEL
+
+Informações sobre o uso de eletricidade no mundo.
+
+```{r}
+#| label: graficodadosempainel
+#| warning: false
+#| echo: false
+
+ggplot(dadoselectricity,
+                     mapping = aes(y = EG.ELC.ACCS.ZS,
+                                   x = year)) +
+  geom_point()
+```
+
+## GRÁFICOS DE DADOS DE CORTE TRANSVERSAL
+
+Falar sobre o gráfico de corte transversal.
+
+```{r}
+#| label: graficocortetransversal
+#| warning: false 
+#| echo: false  
+
+ggplot(dadoselectricity2023,
+                    mapping = aes(y = EG.ELC.ACCS.ZS,
+                                  x = year)) +
+  geom_point()
+```
+
+## GRÁFICOS DE DADOS DE SÉRIE TEMPORAL
+
+Falar sobre o gráfico de dados da série temporal.
+
+```{r}
+#| label: graficoserietemporal
+#| warning: false  
+#| echo: false    
+
+ggplot(dadoselectricitybr,
+                    mapping = aes(y = EG.ELC.ACCS.ZS,
+                                  x = year)) +
+  geom_line()
+```
