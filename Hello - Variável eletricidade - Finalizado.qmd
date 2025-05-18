@@ -1,0 +1,187 @@
+---
+title: "Luis Eduardo Correa"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(tidyverse)
+library(WDI)
+
+options(scipen = 999) # REMOVER A NOT. CIENT.
+# DADOS EM PAINEL
+dadoselectricity <- WDI(country = 'all',
+                indicator = 'EG.ELC.ACCS.ZS')
+
+paises <- c('BR', 'US')
+
+dadoselectricitybrus <- WDI(country = paises,
+                    indicator = 'EG.ELC.ACCS.ZS')
+
+# CORTE TRANSVERSAL
+dadoselectricity2000 <- WDI(country = 'all',
+                    indicator = 'EG.ELC.ACCS.ZS',
+                    start = 2000, end = 2000)
+
+# SÉRIE TEMPORAL
+dadoselectricitybr <- WDI(country = 'BR',
+                  indicator = 'EG.ELC.ACCS.ZS')
+
+```
+
+## VARIÁVEL
+
+Dados referentes ao acesso de energia elétrica entre países.
+
+## GRÁFICOS DE DADOS EM PAINEL
+
+Este gráfico mostra a evolução do acesso à eletricidade em sete países entre 1990 e 2020. Países como Estados Unidos, Rússia e Argentina, já tinham acesso universal desde o início. Em contrapartida, países emergentes como Brasil, China e Índia apresentaram avanços significativos ao longo do tempo, resultado de políticas públicas e investimentos em infraestrutura. A África do Sul teve melhora moderada, mas ainda enfrenta desigualdades internas.
+
+```{r}
+#| label: graficodadosempainel
+#| warning: false
+#| echo: false
+
+# Carregar bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+library(scales)
+
+# Lista de países selecionados
+paises_selecionados <- c("Brazil", "United States", "Argentina", "China", "Russia", "India", "South Africa")
+
+# Filtrar os dados
+dadoselectricity <- dadoselectricity %>%
+  filter(
+    country %in% paises_selecionados,
+    year %% 10 == 0,
+    year >= 1990, year <= 2020
+  )
+
+# Criar o gráfico
+ggplot(data = dadoselectricity, aes(x = year, y = EG.ELC.ACCS.ZS, group = country, color = country)) +
+  
+  # Linhas conectando os pontos de cada país
+  geom_line(size = 1.2, alpha = 0.7) +
+  
+  # Pontos de cada observação
+  geom_point(size = 2.8, alpha = 0.85) +
+  
+  # Cores manuais para cada país
+  scale_color_manual(
+    values = c(
+      "Brazil" = "firebrick",
+      "United States" = "steelblue",
+      "Argentina" = "darkorange",
+      "China" = "forestgreen",
+      "Russia" = "purple",
+      "India" = "goldenrod",
+      "South Africa" = "black"
+    ),
+    labels = c(
+      "Argentina" = "Argentina",
+      "Brazil" = "Brasil",
+      "China" = "China",
+      "India" = "Índia",
+      "Russia" = "Rússia",
+      "South Africa" = "África do Sul",
+      "United States" = "Estados Unidos"
+    ),
+    name = "País"
+  ) +
+  
+  # Título e rótulos dos eixos
+  ggtitle("Acesso à Eletricidade — Comparativo entre Países") +
+  xlab("Ano") +
+  ylab("Acesso à Eletricidade (%)") +
+  
+  # Eixo X com intervalos de 10 anos
+  scale_x_continuous(breaks = seq(1990, 2020, 10)) +
+  
+  # Eixo Y em formato de porcentagem
+  scale_y_continuous(labels = percent_format(scale = 1)) +
+  
+  # Tema visual limpo e ajustado
+  theme_minimal(base_family = "Arial") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    legend.title = element_text(size = 11),
+    legend.text = element_text(size = 10),
+    panel.grid.minor = element_blank()
+  )
+
+
+```
+
+## GRÁFICOS DE DADOS DE CORTE TRANSVERSAL
+
+Neste gráfico, observa-se o acesso à eletricidade em sete países no ano 2000. Japão e Ucrânia já apresentavam cobertura praticamente total. China e Brasil estavam em processo de expansão, com níveis elevados, mas ainda incompletos. Já a Nigéria apresentou o menor acesso entre os países analisados, refletindo os desafios estruturais enfrentados por países em desenvolvimento com grandes populações rurais.
+
+```{r}
+#| label: graficocortetransversal
+#| warning: false 
+#| echo: false  
+
+library(ggplot2)
+library(dplyr)
+library(scales)
+
+# Lista de países para análise
+paises_2000 <- c("Brazil", "China", "Nigeria", "Japan", "Venezuela, RB", "Ukraine", "Georgia")
+
+# Filtrar os dados de 2000
+dadoselectricity2000 <- dadoselectricity2000 %>%
+  filter(year == 2000, country %in% paises_2000) %>%
+  mutate(country_pt = recode(country,
+    "Brazil" = "Brasil",
+    "China" = "China",
+    "Nigeria" = "Nigéria",
+    "Japan" = "Japão",
+    "Venezuela, RB" = "Venezuela",
+    "Ukraine" = "Ucrânia",
+    "Georgia" = "Geórgia"
+  ))
+
+# Gráfico de barras verticais
+ggplot(dadoselectricity2000, aes(x = country_pt, y = EG.ELC.ACCS.ZS, fill = country_pt)) +
+  geom_col(width = 0.6) +
+  geom_text(aes(label = paste0(round(EG.ELC.ACCS.ZS, 1), "%")), vjust = -0.5, size = 3.5) +
+  ggtitle("Acesso à Eletricidade - 2000") +
+  xlab("País") +
+  ylab("Acesso à Eletricidade (%)") +
+  scale_y_continuous(labels = percent_format(scale = 1), limits = c(0, 100)) +
+  theme_minimal(base_family = "Arial") +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    legend.position = "none"
+  )
+
+```
+
+## GRÁFICOS DE DADOS DE SÉRIE TEMPORAL
+
+O gráfico mostra a trajetória do Brasil no acesso à eletricidade ao longo de três décadas. Em 1990, ainda havia lacunas significativas, mas a partir dos anos 2000 o país registrou avanços consistentes. Com o lançamento do programa "Luz para Todos", que acelerou a eletrificação rural. Em 2020, o Brasil alcançou praticamente 100% de cobertura elétrica.
+
+```{r}
+#| label: graficoserietemporal
+#| warning: false  
+#| echo: false    
+
+ggplot(dadoselectricitybr, mapping = aes(y = EG.ELC.ACCS.ZS, x = year)) +
+  geom_line(color = "darkgreen", size = 1.5) +  # Linha verde e mais grossa
+  geom_point(color = "darkgreen", size = 3) +  # Bolinhas nos pontos de dados
+  scale_x_continuous(breaks = seq(1990, 2020, by = 5), limits = c(1990, 2020)) +  # Eixo X de 1990 a 2020 com intervalos de 5 anos
+  ggtitle("Acesso à Eletricidade no Brasil") +  # Título
+  xlab("Ano") +  # Rótulo eixo X
+  ylab("Eletricidade") +  # Rótulo eixo Y
+  theme_minimal(base_family = "Arial") +  # Tema minimalista com fonte Arial
+  theme(legend.position = "none")  # Sem legenda
+
+```
