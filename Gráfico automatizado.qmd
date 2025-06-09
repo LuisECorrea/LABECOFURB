@@ -1,0 +1,129 @@
+---
+title: "Gráfico automatizado"
+author: "Luis Eduardo Tomazini"
+format: html
+editor: visual
+---
+
+## Avanço na empregabilidade de seviços
+
+Análise do gráfico de empregos de serviço com base nos dados do CAGED (Cadastro Geral de Empregados e Desempregados).
+
+## Tendência de crescimento
+
+De forma geral, a quantidade de empregos vai aumentando ano a ano. Isso indica que o terceiro setor vem ganhando importância no mercado de trabalho brasileiro, gerando mais oportunidades ao longo do tempo.
+
+## Momentos de queda ou estabilidade
+
+Apesar do crescimento constante, há alguns períodos em que o avanço ficou mais lento ou até houve redução no número de empregos:
+
+2008: Durante a crise financeira mundial, o crescimento dos empregos diminuiu, refletindo o impacto da recessão.
+
+2017: Observa-se uma oscilação, nos anos de crise econômica e política que o país enfrentou durante o governo de Dilma Rousseff. O número de empregos volta à se estabilizar após o Impeachment de Dilma e posse de Michel Temer.
+
+2020: A pandemia de COVID-19 causou uma desaceleração ou queda temporária, afetando muitos setores da economia, incluindo o terceiro setor.
+
+## Conclusão
+
+O gráfico revela que o setor emprega hoje uma grande quantidade de pessoas, sendo um setor extremamente importante para a economia do Brasil.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| label: load-packages
+#| include: false
+library(rbcb)
+library(tidyverse)
+library(lubridate)
+
+if (!requireNamespace("gganimate", quietly = TRUE)) {
+  install.packages("gganimate", repos = "https://cloud.r-project.org/")
+}
+library(gganimate)
+
+if (!requireNamespace("gifski", quietly = TRUE)) {
+  install.packages("gifski", repos = "https://cloud.r-project.org/")
+}
+library(gifski)
+```
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| label: grafico-importacao
+#| results: 'asis'
+
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(scales)
+library(gganimate)
+library(BETS) # Ou outro pacote com `get_series`, dependendo da origem
+# library(rbcb) se for do Banco Central
+
+# 🔗 Coleta dos dados
+codigo_empserv <- 28772
+empserv_mensal <- get_series(
+  codigo_empserv,
+  start_date = "1989-01-01",
+  end_date = "2024-12-31"
+) %>%
+  rename(data = date, valor = `28772`) %>%
+  mutate(ano = year(data))
+
+# 📊 Calcular acumulado anual
+empserv_anual <- empserv_mensal %>%
+  group_by(ano) %>%
+  summarise(empserv_acumulado = sum(valor, na.rm = TRUE)) %>%
+  filter(ano <= 2024)
+
+# 🏷️ Criar dataframe com anotações (valores absolutos agora!)
+anotacoes <- data.frame(
+  ano = c(2008, 2017, 2020),
+  empserv_acumulado = empserv_anual$empserv_acumulado[empserv_anual$ano %in% c(2008, 2017, 2020)],
+  evento = c("Crise de 2008", "Recuperação Econômica após Impeachment", "Pandemia")
+)
+
+# 🎨 Gráfico animado com eixo Y em milhões
+grafico_empserv <- ggplot(empserv_anual, aes(x = ano, y = empserv_acumulado)) +  
+  geom_line(color = "darkgreen", size = 1.2) +   
+  geom_point(color = "darkgreen", size = 3) +    
+    
+  geom_label(
+    data = anotacoes,
+    aes(y = empserv_acumulado, label = evento),
+    fill = "white",
+    color = "black",
+    size = 3.5,
+    label.size = 0.3,
+    vjust = -1
+  ) +
+  
+  scale_x_continuous(breaks = seq(1989, 2024, by = 5)) +
+  scale_y_continuous(
+    labels = label_number(scale = 1e-5, suffix = " mi"),
+    expand = expansion(mult = c(0.2, 0.9))
+  ) +
+  
+  labs(
+    title = "Número de Empregos de Serviço no Brasil (1989–2024)",
+    x = "Ano",
+    y = "Empregos acumulados (milhões)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.y = element_text(color = "black", size = 10),
+    axis.text.x = element_text(color = "black", size = 10),
+    axis.title = element_text(size = 12),
+    plot.title = element_text(size = 14, face = "bold")
+  ) +
+  transition_reveal(ano)
+
+# ▶️ Exibir animação
+grafico_empserv
+
+
+
+```
